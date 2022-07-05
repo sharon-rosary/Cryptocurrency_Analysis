@@ -1,6 +1,4 @@
 # Cryptocurrency_Analysis
-The last 18 months have transformed cryptocurrency. Its growth has been faster than ever, yet its future has never been so unclear. Analysts estimate that the global cryptocurrency market will be more than triple by 2030, hitting a valuation of nearly $5 billion. Investors, businesses, and brands cannot ignore the rising tide of crypto for long. 
-
 A Crypto or Cryptocurrency is a digital or virtual currency that is secured by cryptography thereby making it nearly impossible to counterfeit or double-spend. Most cryptocurrencies are decentralized networks based on blockchain technology. A defining feature of cryptocurrencies is that they are generally not issued by any central authority, rendering them theoretically immune to government interference or manipulation.
 
 Advantages of Cryptocurrencies include cheaper and faster money transfers and decentralized systems that do not collapse at a single point of failure. Disadvantages of cryptocurrencies include their price volatility, high energy consumption for mining activities, and use in criminal activities. There are close to 18000 cryptocurrencies of various types, prices and volumes.
