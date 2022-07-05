@@ -7,7 +7,7 @@ The project was implemented using Python, R Programming, Microsoft Excel, and SQ
 
 Various other factors like Node Count, Cryptocurrency exchanges, Cost of production, Government Regulations, Scarcity and Market cap. Insights gained from this analysis can lay the foundations of understanding the cryptocurrency market and thereby help novice investors take their first step in joining the Crypto market
 
-Business Questions
+Business Questions:
 
 The following business questions will be answered as part of our analysis:
 
