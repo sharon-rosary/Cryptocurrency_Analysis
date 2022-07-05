@@ -1,0 +1,268 @@
+---
+title: "  **ALY6030 : Analysis of Cryptocurrencies**"
+output: pdf_document
+header-includes:
+  - \usepackage{fancyhdr}
+  - \usepackage{setspace}\spacing{1.5}
+  - \usepackage{titling}
+  - \pretitle{\begin{center}
+    \includegraphics[width=6in,height=11in]{image.png}\LARGE\\}
+  - \posttitle{\end{center}}
+  - \usepackage{sectsty} \sectionfont{\emph}
+---
+\begin{centering}
+\vspace{1cm}
+\Large
+{\bf Professor : Dr.Hema Seshadri} \\
+\vspace{.75cm}
+\large
+{\bf Submitted By : Sharon Appoline Rosary and David Joseph Johnson} \\
+\vspace{.75cm}
+{\bf 05/17/2022 } \\
+\end{centering}
+\newpage
+\tableofcontents
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+This file contains the R code used to Clean and create visualizations of the dataset.
+
+
+## Loading Libraries
+
+```{r , echo=FALSE ,results='hide', warning=FALSE, message=FALSE}
+### Install ISLR Package which contains the College Dataset
+### Invoke Packages
+library("ISLR")
+library("ggplot2")
+library("corrplot")
+library("dplyr")
+library("janitor")
+library("tidyr")
+library("RColorBrewer")
+library("psych")
+library("imputeTS")
+library("corrplot")
+library("leaps")
+library("knitr")
+library("tibble")
+library("stargazer")
+library("lattice")
+library("caret")
+library("pROC")
+library("glmnet")
+library("gridExtra")
+library("stringr")
+```
+
+## Data Cleaning
+```{r , echo=FALSE ,results='hide', warning=FALSE, message=FALSE}
+raw_data <- read.csv(
+  "data.csv",
+  header = TRUE)
+
+# Count of records before cleaning
+nrow(raw_data)
+
+# Columns in Raw Data
+names(raw_data)
+
+#Drop Unwanted columns
+raw_data <- raw_data[-c(4,11,13:16,29)]
+
+# Columns in Raw Data after Drop
+names(raw_data)
+
+#Remove empty rows and columns.
+raw_data <- remove_empty(raw_data,which = c("rows","cols"),quiet=TRUE)
+
+#Check for duplicate records.
+get_dupes(raw_data)
+
+raw_data['mineable'] <- c("")
+raw_data['exchange'] <- c("")
+raw_data['payments'] <- c("")
+names(raw_data)
+
+# Update Tags
+for (i in 1:nrow(raw_data))
+  {
+  ## Initializing -100000 to records with unknown or infinite "max supply"
+  raw_data[i,7] = if (is.na(raw_data[i,7]) == TRUE) -100000 else raw_data[i,7]  
+  
+  ## Initializing values to mineable exchange and payments column
+  raw_data[i,23] = if ((str_detect(raw_data[i,6], "mineable")) == TRUE) 'Yes' else 'No'
+  raw_data[i,24] = if ((str_detect(raw_data[i,6], "exchange")) == TRUE) 'Yes' else 'No'
+  raw_data[i,25] = if ((str_detect(raw_data[i,6], "payments")) == TRUE) 'Yes' else 'No'
+}
+
+# Remove Tags
+raw_data <- raw_data[-c(6)]
+
+#Check for NAs
+knitr::kable(sum(is.na(raw_data)),col.names = "No. of NAs")
+
+write.csv(raw_data,"cleanCryptoData.csv",row.names = FALSE)
+```
+
+# Analysis
+
+## Overview of Dataset
+
+Initial Analysis is performed to better understand the dataset and variables under observation,the HEAD and TAIL of the dataset, and the structure of dataset is looked-up.
+
+```{r }
+df<-raw_data
+# Head,Tail and Structure of Dataset
+head(df)
+tail(df)
+str(df)
+describe(df)
+
+top_ranked <- head(df)
+bottom_ranked <- tail(df)
+```
+
+## Barplot of Year in which Cryptocurrency was added
+```{r }
+
+df$year <- substr(df$date_added, 0, 4)
+
+ggplot(data=df, aes(x=year)) +
+  geom_bar(stat="count", fill="steelblue")+
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5)+
+  xlab("Year Added") + ylab("Count of Cryptocurrencies")+
+  theme_minimal()
+
+
+```
+
+
+## Top 10 Most Expensive Crypto
+
+```{r }
+
+
+
+## OrderBy Price (DESC)
+df2 <- df[order(-df$price),]
+
+## Filter Top 10
+priceDesc <- top_n(df2,10,df2$price)
+
+p <- ggplot(priceDesc, aes(x = reorder(name, -price), y = price)) + geom_bar(stat="identity", color='skyblue',fill='steelblue') +
+  labs(y="Price", x="Cryptocurrency", title="Top 10 Most Expensive Crypto")+
+theme(axis.text.x=element_text(angle=90, hjust=1))+ 
+  geom_text(label=round(priceDesc$price,digit=1),position=position_dodge(width=0.3),
+                                                 hjust=1.1,angle=90,vjust=1)
+p
+```
+
+
+## Count of Tags
+
+```{r }
+catCount <-c()
+for (i in 1:nrow(df))
+  {
+  if(identical(df[i,22],"Yes")){
+    catCount <- append(catCount,"MINEABLE")
+  }
+ if(identical(df[i,23],"Yes")){
+    catCount <- append(catCount,"EXCHANGE")
+  }
+  if(identical(df[i,22],"Yes")){
+    catCount <- append(catCount,"PAYMENTS")
+  }
+  
+}
+
+q <- ggplot(data.frame(catCount), aes(x=catCount)) +
+  geom_bar(stat="count", fill="steelblue")+
+  geom_text(stat='count', aes(label=..count..), vjust=-0.5)+
+  labs(y="COUNT", x="TAG", title="Categories")
+q
+```
+
+
+## Scatterplot of Price Vs Total Supply of currencies in Lower Price Range
+
+```{r }
+
+ggplot(data=df,aes(total_supply,price)) +
+   geom_point(color="slateblue1") + 
+   ggtitle("Scatterplot of Price Vs Total Supply of currencies in Lower Price Range") + labs(y="Price",x= "total_supply")+ ylim(c(0,1000)) + xlim(c(0,500000))
+
+```
+
+## Jitterplot of Total Supply Vs Mineable
+
+```{r }
+
+
+ggplot(df, aes(x=mineable, y=total_supply/1000000, color=mineable)) + 
+  geom_boxplot(notch=FALSE,outlier.colour="yellow", outlier.shape=8,
+                outlier.size=1) +
+  geom_jitter(shape=16, position=position_jitter(0.2)) +
+  labs(caption="Jitterplot of Total Supply Vs Mineable",
+  x="Is Mineable ?", y = "Supply (in Billions)?") +
+  theme(plot.caption = element_text(hjust = 0.5))+ylim(c(0,100000))
+
+
+```
+
+## ANOVA Test
+
+```{r }
+
+# One-way ANOVA Test
+
+# Set significance level
+alpha <- 0.05
+# Dataframe for 30 Days
+thirtyDays <- data.frame('variation' = df$percent_change_30d,
+                         'timeperiod' = rep('thirtyDays',5000), stringsAsFactors = FALSE)
+# Dataframe for 60 Days
+sixtyDays <- data.frame('variation' = df$percent_change_60d,
+                      'timeperiod' = rep('sixtyDays',5000), stringsAsFactors = FALSE)
+# Dataframe for 90 Days
+ninetyDays <- data.frame('variation' = df$percent_change_90d,
+                       'timeperiod' = rep('ninetyDays',5000), stringsAsFactors = FALSE)
+# Combine the Dataframe
+variation <- rbind(thirtyDays,sixtyDays,ninetyDays)
+variation$timeperiod <- as.factor(variation$timeperiod)
+
+# Hypotheses
+# H0: Mean Variation(30 Days) =  Mean Variation(60 Days) =  Mean Variation(90 Days)
+# H1: Atleast one mean is different from others
+
+anova <- aov(variation ~ timeperiod, data = variation)
+a_summ <-summary(anova)
+# Critical Value
+qf(1-alpha,a_summ[[1]][1,1],a_summ[[1]][2,1])
+
+# Test Value
+F.value <- a_summ[[1]][[1,"F value"]]
+F.value
+
+# Compare p-value and alpha to make decision
+p.value <- a_summ[[1]][[1,"Pr(>F)"]]
+p.value
+ifelse(p.value > alpha,"Failed to reject Null Hypothesis","Reject Null Hypothesis")
+```
+
+## Correlation Analysis of Numeric values
+
+```{r }
+numeric_data <- select_if(df, is.numeric) 
+data.cor = cor(numeric_data, method = c("spearman"))
+corrplot(data.cor)
+
+```
+
+
